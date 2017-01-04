@@ -1,6 +1,6 @@
 // Add requirements
 var restify = require('restify');
-var builder = require('builder');
+var builder = require('botbuilder');
 
 // Get environment variables
 var appId = process.env.MY_APP_ID || "Missing your app ID";

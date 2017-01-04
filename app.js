@@ -19,6 +19,49 @@ var bot = new builder.UniversalBot(connector);
 server.post('/api/messages', connector.listen());
 
 // Create bot dialogs
-bot.dialog('/', function (session) {
-    session.send("Aloha, you look like you need a drink.");
-});
+var intents = new builder.IntentDialog();
+bot.dialog('/', intents);
+
+intents.matches(/^help/i, [
+    function (session) {
+        session.send("You can say what you want, or you can tell me 'change name'.");
+    }
+])
+
+intents.matches(/^change name/i, [
+    function (session) {
+        session.beginDialog('/profile');
+    },
+    function (session, results) {
+        session.send("You got it, you're now called %s", session.userData.name);
+    }
+]);
+
+intents.matches(/^mahalo/i, [
+    function (session) {
+        session.send("You're welcome.");
+    }
+])
+
+intents.onDefault([
+    function (session, args, next) {
+        if (!session.userData.name) {
+            session.beginDialog('/profile');
+        } else {
+            next();
+        }
+    },
+    function (session, results) {
+        session.send("Aloha %s!, you look like you need a drink.", session.userData.name);
+    }
+]);
+
+bot.dialog('/profile', [
+    function (session) {
+        builder.Prompts.text(session, "Aloha, what is your name?");
+    },
+    function (session, results) {
+        session.userData.name = results.response;
+        session.endDialog();
+    }
+]);

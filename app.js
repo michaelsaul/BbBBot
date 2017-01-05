@@ -5,6 +5,7 @@ var builder = require('botbuilder');
 // Get environment variables
 var appId = process.env.MY_APP_ID || "Missing your app ID";
 var appPassword = process.env.MY_APP_PASSWORD || "Missing your app Password";
+var model = process.env.MY_LUIS_URL || "Missing your LUIS URL;"
 
 // Setup Restify Server
 var server = restify.createServer();
@@ -13,18 +14,35 @@ server.listen(process.env.PORT || 3000, function()
     console.log('%s listening to %s', server.name, server.url);
 });
 
+// Create LUIS Recognizer that points to my model
+var recognizer = new builder.LuisRecognizer(model);
+
 // Create chat bot
 var connector = new builder.ChatConnector({ appId: appId, appPassword: appPassword });
 var bot = new builder.UniversalBot(connector);
 server.post('/api/messages', connector.listen());
 
 // Create bot dialogs
-var intents = new builder.IntentDialog();
+var intents = new builder.IntentDialog({recognizers: [recognizer]});
 bot.dialog('/', intents);
+
+intents.matches('GetRecipe', [
+function (session, args, next) {
+    // Try extracting entities
+    var cocktailEntity = builder.EntityRecognizer.findEntity(args.entities, 'Cocktail');
+    session.send("I will get that %s recipe for you.", cocktailEntity.entity);
+}
+])
+
+intents.matches('GetHistory', [
+    function (session) {
+        session.send("History of that drink, coming right up!");
+    }
+])
 
 intents.matches(/^help/i, [
     function (session) {
-        session.send("You can say what you want, or you can tell me 'change name'.");
+        session.send("Aloha! Try asking me things like 'how do I make a Mai Tai', 'who invented the Zombie', or you can ask me to 'change name'.");
     }
 ])
 
@@ -52,7 +70,7 @@ intents.onDefault([
         }
     },
     function (session, results) {
-        session.send("Aloha %s!, you look like you need a drink.", session.userData.name);
+        session.send("Aloha %s! Ask me about Tiki Drinks. Type 'help' if you need assistance with anything else.", session.userData.name);
     }
 ]);
 

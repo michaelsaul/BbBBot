@@ -5,7 +5,7 @@ var builder = require('botbuilder');
 // Get environment variables
 var appId = process.env.MY_APP_ID || "Missing your app ID";
 var appPassword = process.env.MY_APP_PASSWORD || "Missing your app Password";
-var model = process.env.MY_LUIS_URL || "Missing your LUIS URL;"
+var model = process.env.MY_LUIS_URL || "Missing your LUIS URL";
 
 // Setup Restify Server
 var server = restify.createServer();
@@ -35,8 +35,10 @@ function (session, args, next) {
 ])
 
 intents.matches('GetHistory', [
-    function (session) {
-        session.send("History of that drink, coming right up!");
+    function (session, args, next) {
+        // Try extracting entities
+        var cocktailEntity = builder.EntityRecognizer.findEntity(args.entities, 'Cocktail');
+        session.send("History of %s, coming right up!", cocktailEntity.entity);
     }
 ])
 

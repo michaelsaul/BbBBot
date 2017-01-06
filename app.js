@@ -7,7 +7,7 @@ var appInsightsKey = process.env.APPINSIGHTS_INSTRUMENTATIONKEY || "Missing AppI
 // Add requirements
 var restify = require('restify');
 var builder = require('botbuilder');
-var telemetyModule = require('./telemetry-module.js');
+var telemetryModule = require('./telemetry-module.js');
 
 var appInsights = require("applicationinsights");
 appInsights.setup(appInsightsKey).start();
@@ -33,7 +33,7 @@ server.post('/api/messages', connector.listen());
 var intents = new builder.IntentDialog({recognizers: [recognizer]});
 
 bot.dialog('/', function(session) {
-    var telemetry = telemetyModule.createTelemetry(session);
+    var telemetry = telemetryModule.createTelemetry(session);
 
     session.send('Aloha and welcome to the BbBBot!')
         if (!session.userData.name) {
@@ -44,8 +44,7 @@ bot.dialog('/', function(session) {
     appInsightsClient.trackTrace("start", telemetry);
 
     session.beginDialog('/begin');
-
-    });
+});
 
 bot.dialog('/begin', intents);
 
@@ -54,6 +53,9 @@ function (session, args, next) {
     // Try extracting entities
     var cocktailEntity = builder.EntityRecognizer.findEntity(args.entities, 'Cocktail');
     session.send("I will get that %s recipe for you.", cocktailEntity.entity);
+    
+    var telemetry = telemetryModule.createTelemetry(session);
+    appInsightsClient.trackEvent("GetRecipe", telemetry);
 }
 ])
 
@@ -62,12 +64,18 @@ intents.matches('GetHistory', [
         // Try extracting entities
         var cocktailEntity = builder.EntityRecognizer.findEntity(args.entities, 'Cocktail');
         session.send("History of %s, coming right up!", cocktailEntity.entity);
+        
+        var telemetry = telemetryModule.createTelemetry(session);
+        appInsightsClient.trackEvent("GetHistory", telemetry);
     }
 ])
 
 intents.matches(/^help/i, [
     function (session) {
         session.send("Aloha! Try asking me things like 'how do I make a Mai Tai', 'who invented the Zombie', or you can ask me to 'change name'.");
+        
+        var telemetry = telemetryModule.createTelemetry(session);
+        appInsightsClient.trackEvent("help", telemetry);
     }
 ])
 
@@ -77,31 +85,41 @@ intents.matches(/^change name/i, [
     },
     function (session, results) {
         session.send("You got it, you're now called %s", session.userData.name);
-    }
+    },
 ]);
 
 intents.matches(/^mahalo/i, [
     function (session) {
         session.send("You're welcome.");
+        
+        var telemetry = telemetryModule.createTelemetry(session);
+        appInsightsClient.trackEvent("mahalo", telemetry);
     }
 ])
 
 intents.matches(/^goodbye/i, [
     // Resets userdata
     function (session) {
-        delete session.userData[name];
+        delete session.userData.name;
         session.send("Goodbye!");
         session.endDialog;
+        session.replaceDialog("/");
+        
+        var telemetry = telemetryModule.createTelemetry(session);
+        appInsightsClient.trackEvent("goodbye", telemetry);
     }
 ])
 
 bot.dialog('/profile', [
     function (session) {
-        builder.Prompts.text(session, "Aloha, what is your name?");
+        builder.Prompts.text(session, "What is your name?");
     },
     function (session, results) {
         session.userData.name = results.response;
         session.endDialog();
+        
+        var telemetry = telemetryModule.createTelemetry(session);
+        appInsightsClient.trackEvent("profile", telemetry);
     }
 ]);
 

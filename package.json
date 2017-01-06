@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/michaelsaul/BbBBot#readme",
   "dependencies": {
+    "applicationinsights": "^0.17.1",
     "botbuilder": "^3.4.4",
     "restify": "^4.3.0"
   }

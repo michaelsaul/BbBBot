@@ -1,11 +1,18 @@
-// Add requirements
-var restify = require('restify');
-var builder = require('botbuilder');
-
 // Get environment variables
 var appId = process.env.MY_APP_ID || "Missing your app ID";
 var appPassword = process.env.MY_APP_PASSWORD || "Missing your app Password";
 var model = process.env.MY_LUIS_URL || "Missing your LUIS URL";
+var appInsightsKey = process.env.APPINSIGHTS_INSTRUMENTATIONKEY || "Missing AppInsights key";
+
+// Add requirements
+var restify = require('restify');
+var builder = require('botbuilder');
+var telemetyModule = require('./telemetry-module.js');
+
+var appInsights = require("applicationinsights");
+appInsights.setup(appInsightsKey).start();
+var appInsightsClient = appInsights.getClient();
+
 
 // Setup Restify Server
 var server = restify.createServer();
@@ -24,7 +31,23 @@ server.post('/api/messages', connector.listen());
 
 // Create bot dialogs
 var intents = new builder.IntentDialog({recognizers: [recognizer]});
-bot.dialog('/', intents);
+
+bot.dialog('/', function(session) {
+    var telemetry = telemetyModule.createTelemetry(session);
+
+    session.send('Aloha and welcome to the BbBBot!')
+        if (!session.userData.name) {
+            session.beginDialog('/profile');
+        } else {
+            session.beginDialog('/begin');
+        };
+    appInsightsClient.trackTrace("start", telemetry);
+
+    session.beginDialog('/begin');
+
+    });
+
+bot.dialog('/begin', intents);
 
 intents.matches('GetRecipe', [
 function (session, args, next) {
@@ -63,18 +86,14 @@ intents.matches(/^mahalo/i, [
     }
 ])
 
-intents.onDefault([
-    function (session, args, next) {
-        if (!session.userData.name) {
-            session.beginDialog('/profile');
-        } else {
-            next();
-        }
-    },
-    function (session, results) {
-        session.send("Aloha %s! Ask me about Tiki Drinks. Type 'help' if you need assistance with anything else.", session.userData.name);
+intents.matches(/^goodbye/i, [
+    // Resets userdata
+    function (session) {
+        delete session.userData[UserNameKey];
+        session.send("Goodbye!");
+        session.endDialog;
     }
-]);
+])
 
 bot.dialog('/profile', [
     function (session) {
@@ -83,5 +102,11 @@ bot.dialog('/profile', [
     function (session, results) {
         session.userData.name = results.response;
         session.endDialog();
+    }
+]);
+
+intents.onDefault([
+    function (session, results) {
+        session.send("Aloha %s! Ask me about Tiki Drinks. Type 'help' if you need assistance with anything else.", session.userData.name);
     }
 ]);

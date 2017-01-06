@@ -89,7 +89,7 @@ intents.matches(/^mahalo/i, [
 intents.matches(/^goodbye/i, [
     // Resets userdata
     function (session) {
-        delete session.userData[UserNameKey];
+        delete session.userData[name];
         session.send("Goodbye!");
         session.endDialog;
     }

@@ -72,7 +72,7 @@ intents.matches('GetHistory', [
 
 intents.matches(/^help/i, [
     function (session) {
-        session.send("Aloha! Try asking me things like 'how do I make a Mai Tai', 'who invented the Zombie', or you can ask me to 'change name'.");
+        session.send("Try asking me things like 'how do I make a Mai Tai', 'who invented the Zombie', or you can ask me to 'change name'.");
         
         var telemetry = telemetryModule.createTelemetry(session);
         appInsightsClient.trackEvent("help", telemetry);
@@ -88,7 +88,7 @@ intents.matches(/^change name/i, [
     },
 ]);
 
-intents.matches(/^mahalo/i, [
+intents.matches('ThankYou', [
     function (session) {
         session.send("You're welcome.");
         
@@ -116,6 +116,7 @@ bot.dialog('/profile', [
     },
     function (session, results) {
         session.userData.name = results.response;
+        session.send ("Nice to meet you %s.", session.userData.name)
         session.endDialog();
         
         var telemetry = telemetryModule.createTelemetry(session);
@@ -125,6 +126,6 @@ bot.dialog('/profile', [
 
 intents.onDefault([
     function (session, results) {
-        session.send("Aloha %s! Ask me about Tiki Drinks. Type 'help' if you need assistance with anything else.", session.userData.name);
+        session.send("Ask me about Tiki Drinks. Type 'help' if you need assistance with anything else.");
     }
 ]);

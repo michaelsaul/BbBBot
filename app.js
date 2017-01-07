@@ -72,7 +72,7 @@ intents.matches('GetHistory', [
 
 intents.matches(/^help/i, [
     function (session) {
-        session.send("Try asking me things like 'how do I make a Mai Tai', 'who invented the Zombie', or you can ask me to 'change name'.");
+        session.send("Try asking me things like 'how do I make a Mai Tai', 'who invented the Zombie', or you can ask me to 'change name'. When you are done, you can say 'goodbye'");
         
         var telemetry = telemetryModule.createTelemetry(session);
         appInsightsClient.trackEvent("help", telemetry);

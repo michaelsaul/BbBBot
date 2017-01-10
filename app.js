@@ -3,21 +3,27 @@ var appId = process.env.MY_APP_ID || "Missing your app ID";
 var appPassword = process.env.MY_APP_PASSWORD || "Missing your app Password";
 var model = process.env.MY_LUIS_URL || "Missing your LUIS URL";
 var appInsightsKey = process.env.APPINSIGHTS_INSTRUMENTATIONKEY || "Missing AppInsights key";
+var databaseURL = process.env.MONGO_URL || "Missing MongoDB URL"; 
 
 // Add requirements
 var restify = require('restify');
 var builder = require('botbuilder');
+var mongoose = require('mongoose');
 var telemetryModule = require('./telemetry-module.js');
 
 var appInsights = require("applicationinsights");
 appInsights.setup(appInsightsKey).start();
 var appInsightsClient = appInsights.getClient();
 
+// Connect to mongo database
+mongoose.connect(databaseURL);
+mongoose.connection.on('error', () => {console.log("DB connection error."); });
 
 // Setup Restify Server
 var server = restify.createServer();
-server.listen(process.env.PORT || 3000, function()
-{
+server.use(restify.bodyParser());
+require("./app/cocktails.js")(server);
+server.listen(process.env.PORT || 3000, function() {
     console.log('%s listening to %s', server.name, server.url);
 });
 
